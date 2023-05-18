@@ -22,7 +22,32 @@ SCENARIO("File destination mapping") {
                 REQUIRE( imagedest.string().rfind("Z:\\Raw Photo", 0) == 0);
             }
 
+            THEN("Photo files with different extension case are put in photo path") {
+                auto imagedest = get_destination(imagefilecaps);
+                REQUIRE( imagedest.string().rfind("Z:\\Raw Photo", 0) == 0);
+            }
+
+            THEN("Video files are put in video path") {
+                auto videodest = get_destination(videofile);
+                REQUIRE( videodest.string().rfind("Z:\\Raw Video", 0) == 0);
+            }
+            THEN("Video files with different extension case are put in video path") {
+                auto videodest = get_destination(videofilecaps);
+                REQUIRE( videodest.string().rfind("Z:\\Raw Video", 0) == 0);
+            }
+            THEN("Destination includes file name") {
+                auto imagedst = get_destination(imagefile);
+                REQUIRE( imagedst.string().find("myphoto.dng") != string::npos);
+            }
         }
 
+        WHEN("File extension is not in list") {
+            path imagefile("E:\\DCIM\\myphoto.bmp");
+
+            THEN("NOPATH value is returned") {
+                auto imagedst = get_destination(imagefile);
+                REQUIRE( imagedst == NOPATH );
+            }
+        }
     }
 }

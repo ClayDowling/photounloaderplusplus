@@ -10,7 +10,10 @@ using std::string;
 struct copyCommand {
     path source;
     path destination;
+    unsigned long size;
 };
+
+extern path NOPATH;
 
 void add_destination(string extension, path destination);
 path get_destination(path source);

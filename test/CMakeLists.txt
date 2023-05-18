@@ -13,4 +13,6 @@ target_link_libraries(${TESTPROJECT}
     Catch2::Catch2WithMain
 )
 
+set_property(TARGET ${TESTPROJECT} PROPERTY CXX_STANDARD 20)
+
 catch_discover_tests(${TESTPROJECT})

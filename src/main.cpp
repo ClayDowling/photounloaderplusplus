@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include <cstdlib>
+#include "destination.h"
 
 using std::cout;
 using std::endl;
@@ -14,7 +15,7 @@ int main(int argc, const char* argv[]) {
     path homedir = getenv("USERPROFILE");
     path configfile = homedir / ".photounloader";
 
-    cout << "Reading from " << configfile << endl;
+    cout << "Reading from " << configfile.string() << endl;
 
     {
         string extension;
@@ -25,7 +26,7 @@ int main(int argc, const char* argv[]) {
             destination = "";
             in >> extension >> destination;
             if (extension != "" && destination != "") {
-                cout << extension << " -> " << destination << endl;
+                add_destination(extension, destination);
             }
         }
     }

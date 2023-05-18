@@ -10,6 +10,7 @@ using std::map;
 using std::filesystem::path;
 
 map<string, path> filepaths;
+path NOPATH;
 
 string toUpper(string src) {
     string dst = "";
@@ -30,5 +31,8 @@ void add_destination(string extension, path destination) {
 
 path get_destination(path source) {
     string ext = toUpper(source.extension().string());
-    return filepaths[ext];
+    if (filepaths.contains(ext)) {
+        return filepaths[ext] / source.filename();
+    }
+    return NOPATH;
 }
