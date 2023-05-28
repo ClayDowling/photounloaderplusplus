@@ -26,7 +26,7 @@ token_stream::operator bool() const { return point < buffer.size(); }
 token_stream &operator>>(token_stream &lhs, token &rhs) {
 
   if (lhs) {
-    string work;
+    string work = "";
     const char SINGLEQUOTE = '\'';
     const char DOUBLEQUOTE = '\"';
     const char SPACES = '\0';
@@ -68,8 +68,19 @@ token_stream &operator>>(token_stream &lhs, token &rhs) {
     }
     if (work == "->") {
       rhs.type = ARROW;
+    } else if (work == "IGNORE") {
+      rhs.type = IGNORE;
+    } else {
+      if (!lhs) {
+        rhs.type = END_OF_INPUT;
+        rhs.value = "";
+      }
     }
+
     rhs.value = work;
+  } else {
+    rhs.type = END_OF_INPUT;
+    rhs.value = "";
   }
   return lhs;
 }

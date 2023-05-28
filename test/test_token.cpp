@@ -22,5 +22,16 @@ SCENARIO("Valid input buffer") {
     AND_THEN("value is Z:\\Camera Photos") {
       REQUIRE(t.value == "Z:\\Camera Photos");
     }
+    ts >> t;
+    AND_THEN("type is STRING") { REQUIRE(t.type == STRING); }
+    AND_THEN("value is Z:\\\"large\" files") {
+      REQUIRE(t.value == "Z:\\\"large\" files");
+    }
+    ts >> t;
+    AND_THEN("type is IGNORE") { REQUIRE(t.type == IGNORE); }
+    AND_THEN("value is IGNORE") { REQUIRE(t.value == "IGNORE"); }
+    ts >> t;
+    AND_THEN("type is END_OF_INPUT") { REQUIRE(t.type == END_OF_INPUT); }
+    AND_THEN("value is empty string") { REQUIRE(t.value == ""); }
   }
 }
