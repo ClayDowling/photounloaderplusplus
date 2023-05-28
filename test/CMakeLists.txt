@@ -4,8 +4,11 @@ set(TESTPROJECT test-${PROJECT_NAME})
 
 add_executable(${TESTPROJECT}
     test_destination.cpp
+    test_token.cpp
+    test_tokenstream.cpp
 
     ../src/destination.cpp
+    ../src/token.cpp
 )
 
 target_link_libraries(${TESTPROJECT}

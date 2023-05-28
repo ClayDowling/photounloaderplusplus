@@ -1,5 +1,6 @@
 add_executable(${PROJECT_NAME}
     destination.cpp
+    token.cpp
     main.cpp
 )
 
