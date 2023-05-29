@@ -6,9 +6,11 @@ add_executable(${TESTPROJECT}
     test_destination.cpp
     test_token.cpp
     test_tokenstream.cpp
+    test_parser.cpp
 
     ../src/destination.cpp
     ../src/token.cpp
+    ../src/configparser.cpp
 )
 
 target_link_libraries(${TESTPROJECT}

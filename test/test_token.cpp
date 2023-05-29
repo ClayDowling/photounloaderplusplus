@@ -35,3 +35,13 @@ SCENARIO("Valid input buffer") {
     AND_THEN("value is empty string") { REQUIRE(t.value == ""); }
   }
 }
+
+SCENARIO("Input buffer does not end with a newline") {
+  token_stream ts(".jpg");
+  WHEN("Token is read") {
+    token t;
+    ts >> t;
+    THEN("Type should be EXTENSION") { REQUIRE(t.type == EXTENSION); }
+    AND_THEN("Full value of token is read") { REQUIRE(t.value == ".jpg"); }
+  }
+}

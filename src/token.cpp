@@ -35,7 +35,7 @@ token_stream &operator>>(token_stream &lhs, token &rhs) {
     rhs.type = UNKNOWN;
     rhs.value = "";
 
-    for (auto c = lhs.get_char(); lhs && c != token_end; c = lhs.get_char()) {
+    for (auto c = lhs.get_char(); c != token_end; c = lhs.get_char()) {
 
       if (rhs.type == UNKNOWN) {
         while (std::isspace(c))
@@ -71,7 +71,7 @@ token_stream &operator>>(token_stream &lhs, token &rhs) {
     } else if (work == "IGNORE") {
       rhs.type = IGNORE;
     } else {
-      if (!lhs) {
+      if (!lhs && rhs.type == UNKNOWN) {
         rhs.type = END_OF_INPUT;
         rhs.value = "";
       }
