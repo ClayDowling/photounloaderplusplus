@@ -16,6 +16,7 @@ struct copyCommand {
 };
 
 extern path NOPATH;
+extern path IGNORE_EXTENSION;
 
 void add_destination(string extension, path destination);
 path get_destination(path source);

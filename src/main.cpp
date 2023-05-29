@@ -1,23 +1,29 @@
 #include "concurrentqueue.h"
 #include "destination.h"
+#include "token.h"
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 using std::cout;
 using std::endl;
+using std::find;
 using std::ifstream;
 using std::string;
 using std::filesystem::file_size;
 using std::filesystem::path;
 using std::filesystem::recursive_directory_iterator;
 using namespace std::chrono;
+using std::vector;
 using std::chrono::duration;
 using std::chrono::system_clock;
 
 ConcurrentQueue<copyCommand> files;
+vector<string> missingDirectories;
 
 void loadFiles(path s) {
   for (auto e : recursive_directory_iterator(s)) {
@@ -41,10 +47,59 @@ void loadFiles(path s) {
       snprintf(datestamp, sizeof(datestamp), "%4.4d-%2.2d-%2.2d", y, m, d);
 
       auto root = get_destination(p);
-      if (root != NOPATH) {
+      if (root == NOPATH) {
+        if (find(missingDirectories.begin(), missingDirectories.end(),
+                 p.extension().string()) == missingDirectories.end()) {
+          missingDirectories.push_back(p.extension().string());
+        }
+      } else {
         v.destination = root / datestamp / p.filename();
         files.push(v);
       }
+    }
+  }
+}
+
+void read_configuration(path configfile) {
+  string extension;
+  string destination;
+  ifstream in(configfile.c_str());
+
+  string content((std::istreambuf_iterator<char>(in)),
+                 (std::istreambuf_iterator<char>()));
+  in.close();
+
+  token t;
+  token_stream ts(content);
+  while (ts) {
+    ts >> t;
+    std::cerr << "Type: " << t.type << " Value: " << t.value << endl;
+    switch (t.type) {
+    case EXTENSION:
+      extension = t.value;
+      break;
+    case ARROW:
+      break;
+    case STRING:
+      if (extension != "") {
+        add_destination(extension, t.value);
+        extension = "";
+      } else {
+        std::cerr << "Path " << t.value
+                  << " not associated with a file extension." << endl;
+      }
+      break;
+    case IGNORE:
+      if (extension != "") {
+        add_destination(extension, IGNORE_EXTENSION);
+        extension = "";
+      } else {
+        std::cerr << "IGNORE without associated file extension." << endl;
+      }
+      break;
+    default:
+      std::cerr << "Unknown value \"" << t.value << "\" in input." << endl;
+      break;
     }
   }
 }
@@ -55,20 +110,7 @@ int main(int argc, const char *argv[]) {
   path configfile = homedir / ".photounloader";
 
   cout << "Reading from " << configfile.string() << endl;
-
-  {
-    string extension;
-    string destination;
-    ifstream in(configfile.c_str());
-    while (in) {
-      extension = "";
-      destination = "";
-      in >> extension >> destination;
-      if (extension != "" && destination != "") {
-        add_destination(extension, destination);
-      }
-    }
-  }
+  read_configuration(configfile);
 
   string startpath = ".";
   if (argc > 1) {
@@ -82,6 +124,13 @@ int main(int argc, const char *argv[]) {
     }
   } catch (std::out_of_range e) {
     cout << "List complete." << endl;
+  }
+
+  if (!missingDirectories.empty()) {
+    cout << "Missing extensions:" << endl;
+    for (auto m : missingDirectories) {
+      cout << m << endl;
+    }
   }
 
   return EXIT_SUCCESS;

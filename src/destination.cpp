@@ -12,6 +12,7 @@ using std::filesystem::path;
 
 map<string, path> filepaths;
 path NOPATH;
+path IGNORE_EXTENSION("NULL:");
 
 string toUpper(string src) {
   string dst = "";
