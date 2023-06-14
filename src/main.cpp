@@ -1,5 +1,6 @@
 #include "concurrentqueue.h"
 #include "destination.h"
+#include "configparser.h"
 #include "token.h"
 #include <algorithm>
 #include <chrono>
@@ -69,39 +70,16 @@ void read_configuration(path configfile) {
                  (std::istreambuf_iterator<char>()));
   in.close();
 
-  token t;
-  token_stream ts(content);
-  while (ts) {
-    ts >> t;
-    std::cerr << "Type: " << t.type << " Value: " << t.value << endl;
-    switch (t.type) {
-    case EXTENSION:
-      extension = t.value;
-      break;
-    case ARROW:
-      break;
-    case STRING:
-      if (extension != "") {
-        add_destination(extension, t.value);
-        extension = "";
+  Parser configparser;
+  auto filemap = configparser.Parse(content);
+  for(auto p: filemap) {
+      if (p.second == "IGNORE") {
+          add_destination(p.first, IGNORE_EXTENSION);
       } else {
-        std::cerr << "Path " << t.value
-                  << " not associated with a file extension." << endl;
+          add_destination(p.first, p.second);
       }
-      break;
-    case IGNORE:
-      if (extension != "") {
-        add_destination(extension, IGNORE_EXTENSION);
-        extension = "";
-      } else {
-        std::cerr << "IGNORE without associated file extension." << endl;
-      }
-      break;
-    default:
-      std::cerr << "Unknown value \"" << t.value << "\" in input." << endl;
-      break;
-    }
   }
+
 }
 
 int main(int argc, const char *argv[]) {

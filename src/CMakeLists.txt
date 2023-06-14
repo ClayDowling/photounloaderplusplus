@@ -1,4 +1,5 @@
 add_executable(${PROJECT_NAME}
+    configparser.cpp
     destination.cpp
     token.cpp
     main.cpp
