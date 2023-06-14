@@ -2,6 +2,7 @@
 #define CONFIGPARSER_H
 
 #include "token.h"
+#include <cstring>
 #include <exception>
 #include <map>
 #include <string>
@@ -15,7 +16,8 @@ private:
   const char *message;
 
 public:
-  parse_exception(const char *m) : message(m){};
+  parse_exception(const char *m) : message(strdup(m)){};
+  parse_exception(string m) : message(strdup(m.c_str())){};
 
   virtual const char *what() const noexcept;
 };

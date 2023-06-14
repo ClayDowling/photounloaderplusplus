@@ -45,3 +45,17 @@ SCENARIO("Input buffer does not end with a newline") {
     AND_THEN("Full value of token is read") { REQUIRE(t.value == ".jpg"); }
   }
 }
+
+SCENARIO("Multi-token input ends with IGNORE") {
+  WHEN("IGNORE is not followed by whitepspace") {
+    token_stream ts(".jpg IGNORE");
+    THEN("Final token is IGNORE") {
+      token t;
+      ts >> t;
+      REQUIRE(t.type == EXTENSION);
+      ts >> t;
+      REQUIRE(t.type == IGNORE);
+      REQUIRE(t.value == "IGNORE");
+    }
+  }
+}

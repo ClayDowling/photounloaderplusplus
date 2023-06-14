@@ -1,4 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
+#include <iostream>
 
 #include "configparser.h"
 
@@ -28,6 +29,35 @@ SCENARIO("Valid config file") {
 
       REQUIRE(jpeg == "Z:\\Videos");
       REQUIRE(raw == "Z:\\Photos");
+    }
+  }
+  WHEN("Extension is ignored") {
+    THEN("path returned is IGNORE") {
+      Parser p;
+      auto actual = p.Parse(".jpg IGNORE");
+      REQUIRE(actual[".jpg"] == "IGNORE");
+    }
+  }
+}
+
+SCENARIO("Invalid config file") {
+  WHEN("Directory does not have preceeding extension") {
+    THEN("Parser throws exception") {
+      Parser p;
+
+      REQUIRE_THROWS_AS(p.Parse("Z:\\Videos"), parse_exception);
+    }
+  }
+  WHEN("Input ends after extension") {
+    THEN("Parse throws exception") {
+      Parser p;
+      REQUIRE_THROWS_AS(p.Parse(".jpg"), parse_exception);
+    }
+  }
+  WHEN("Extension follows another extension") {
+    THEN("Parse throws an exception") {
+      Parser p;
+      REQUIRE_THROWS_AS(p.Parse(".jpg .mp4 Z:\\Photos"), parse_exception);
     }
   }
 }
