@@ -33,7 +33,7 @@ vector<string> missingDirectories;
 #define _BV(bit) (1 << (bit))
 
 
-void loadFiles(path s) {
+void loadFiles(path s, std::function<void(path, path)> closure) {
     for (auto e: recursive_directory_iterator(s)) {
 
         path p(e);
@@ -41,6 +41,7 @@ void loadFiles(path s) {
         if (std::filesystem::is_regular_file(p)) {
 
             auto root = get_destination(p);
+            closure(p, root);
             if (root == NOPATH) {
                 if (find(missingDirectories.begin(), missingDirectories.end(), p.extension().string()) ==
                     missingDirectories.end()) {

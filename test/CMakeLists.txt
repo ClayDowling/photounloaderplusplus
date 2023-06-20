@@ -7,10 +7,12 @@ add_executable(${TESTPROJECT}
     test_token.cpp
     test_tokenstream.cpp
     test_parser.cpp
+        test_missingfileclosure.cpp
 
     ../src/destination.cpp
     ../src/token.cpp
     ../src/configparser.cpp
+        ../src/missingfileclosure.cpp
 )
 
 target_link_libraries(${TESTPROJECT}
