@@ -16,8 +16,9 @@ using std::string;
 class missingfileclosure {
 
 public:
-    vector<string> missingeExtensions;
+    vector<string> *missingeExtensions;
 
+    missingfileclosure(vector<string>*);
     void operator()(path src, path dst);
 };
 

@@ -2,6 +2,8 @@
 #include "destination.h"
 #include "configparser.h"
 #include "token.h"
+#include "filedestinationclosure.h"
+#include "missingfileclosure.h"
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
@@ -14,6 +16,7 @@
 #include <fileapi.h>
 
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::find;
 using std::ifstream;
@@ -27,11 +30,9 @@ using std::vector;
 using std::chrono::duration;
 using std::chrono::system_clock;
 
-ConcurrentQueue<copyCommand> files;
-vector<string> missingDirectories;
-
 #define _BV(bit) (1 << (bit))
 
+ConcurrentQueue<copyCommand> commands;
 
 void loadFiles(path s, std::function<void(path, path)> closure) {
     for (auto e: recursive_directory_iterator(s)) {
@@ -39,33 +40,8 @@ void loadFiles(path s, std::function<void(path, path)> closure) {
         path p(e);
 
         if (std::filesystem::is_regular_file(p)) {
-
             auto root = get_destination(p);
             closure(p, root);
-            if (root == NOPATH) {
-                if (find(missingDirectories.begin(), missingDirectories.end(), p.extension().string()) ==
-                    missingDirectories.end()) {
-                    missingDirectories.push_back(p.extension().string());
-                }
-            } else {
-                char datestamp[12];
-                const auto lastwrite = std::filesystem::last_write_time(e);
-                const auto systemTime = std::chrono::file_clock::to_sys(lastwrite);
-
-                copyCommand v;
-                v.source = p;
-                v.size = file_size(p);
-
-                const std::chrono::year_month_day ymd(floor<days>(systemTime));
-
-                int y = (int) ymd.year();
-                unsigned m = (unsigned) ymd.month();
-                unsigned d = (unsigned) ymd.day();
-
-                snprintf(datestamp, sizeof(datestamp), "%4.4d-%2.2d-%2.2d", y, m, d);
-                v.destination = root / datestamp / p.filename();
-                files.push(v);
-            }
         }
     }
 }
@@ -120,25 +96,34 @@ int main(int argc, const char *argv[]) {
     if (argc > 1) {
         startpath = argv[1];
     } else {
-        cout << "Looking for drive" << endl;
+        cout << "Looking for drive...." << endl;
         startpath = find_start_path();
         cout << "Found " << startpath << endl;
     }
-    loadFiles(startpath);
+
+    {
+        vector<string> missingExtensions;
+        missingfileclosure missing(&missingExtensions);
+        loadFiles(startpath, missing);
+
+        if (!missingExtensions.empty()) {
+            cerr << "Missing destinations for the following extensions:" << endl;
+            for (auto f: missingExtensions) {
+                cerr << f << endl;
+            }
+            return EXIT_FAILURE;
+        }
+    }
+
+    filedestinationclosure files(&commands);
+    loadFiles(startpath, files);
 
     try {
-        for (auto d = files.frontAndPop();; d = files.frontAndPop()) {
+        for (auto d = commands.frontAndPop();; d = commands.frontAndPop()) {
             cout << d.destination.string() << endl;
         }
     } catch (std::out_of_range e) {
         cout << "List complete." << endl;
-    }
-
-    if (!missingDirectories.empty()) {
-        cout << "Missing extensions:" << endl;
-        for (auto m: missingDirectories) {
-            cout << m << endl;
-        }
     }
 
     return EXIT_SUCCESS;

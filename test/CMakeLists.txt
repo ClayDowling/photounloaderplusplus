@@ -8,11 +8,13 @@ add_executable(${TESTPROJECT}
     test_tokenstream.cpp
     test_parser.cpp
         test_missingfileclosure.cpp
+        test_filedestinationclosure.cpp
 
     ../src/destination.cpp
     ../src/token.cpp
     ../src/configparser.cpp
         ../src/missingfileclosure.cpp
+        ../src/filedestinationclosure.cpp
 )
 
 target_link_libraries(${TESTPROJECT}

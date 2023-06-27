@@ -2,6 +2,7 @@ add_executable(${PROJECT_NAME}
     configparser.cpp
     destination.cpp
         missingfileclosure.cpp
+        filedestinationclosure.cpp
     token.cpp
     main.cpp
 )
