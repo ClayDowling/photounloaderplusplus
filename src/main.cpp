@@ -12,6 +12,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <thread>
 
 #include <fileapi.h>
 
@@ -33,6 +34,7 @@ using std::chrono::system_clock;
 #define _BV(bit) (1 << (bit))
 
 ConcurrentQueue<copyCommand> commands;
+ConcurrentQueue<string> logQueue;
 
 void loadFiles(path s, std::function<void(path, path)> closure) {
     for (auto e: recursive_directory_iterator(s)) {
@@ -66,6 +68,22 @@ void read_configuration(path configfile) {
 
 }
 
+void log_message(string msg) {
+    logQueue.push(msg);
+}
+
+void printLog(std::stop_token stoken) {
+    while(true) {
+        try {
+            auto msg = logQueue.frontAndPop();
+            cerr << msg << endl;
+        } catch(std::out_of_range e) {
+            if (stoken.stop_requested()) return;
+            std::this_thread::sleep_for(500ms);
+        }
+    }
+}
+
 string find_start_path() {
     auto drives = GetLogicalDrives();
 
@@ -74,7 +92,6 @@ string find_start_path() {
         if (drives & mask) {
             ostringstream d;
             d << (char) ('A' + i) << ":\\DCIM";
-            cout << "Trying " << d.str() << endl;
             if (std::filesystem::exists(d.str())) {
                 return d.str();
             }
@@ -83,6 +100,33 @@ string find_start_path() {
 
     return ".";
 }
+
+void copyFile() {
+    try {
+        string verb;
+        while(true) {
+            auto cmd = commands.frontAndPop();
+            auto parentpath = cmd.destination.parent_path();
+            if (!std::filesystem::exists(parentpath)) {
+                log_message("Creating folder " + parentpath.string());
+                std::filesystem::create_directories(parentpath);
+            }
+            if (std::filesystem::exists(cmd.destination)) {
+                verb = "Replacing ";
+                std::filesystem::remove(cmd.destination);
+            } else {
+                verb = "Copying ";
+            }
+            log_message(verb + cmd.source.string() + " to " + cmd.destination.string());
+            std::filesystem::copy(cmd.source, cmd.destination);
+        }
+    } catch(std::out_of_range e) {
+
+    } catch(std::filesystem::filesystem_error e) {
+        log_message(e.what());
+    }
+}
+
 
 int main(int argc, const char *argv[]) {
 
@@ -96,10 +140,9 @@ int main(int argc, const char *argv[]) {
     if (argc > 1) {
         startpath = argv[1];
     } else {
-        cout << "Looking for drive...." << endl;
         startpath = find_start_path();
-        cout << "Found " << startpath << endl;
     }
+    log_message("Unloading from " + startpath);
 
     {
         vector<string> missingExtensions;
@@ -118,13 +161,19 @@ int main(int argc, const char *argv[]) {
     filedestinationclosure files(&commands);
     loadFiles(startpath, files);
 
-    try {
-        for (auto d = commands.frontAndPop();; d = commands.frontAndPop()) {
-            cout << d.destination.string() << endl;
-        }
-    } catch (std::out_of_range e) {
-        cout << "List complete." << endl;
-    }
+    std::jthread t1{copyFile};
+    std::jthread t2{copyFile};
+    std::jthread t3{copyFile};
+    std::jthread t4{copyFile};
+
+    std::jthread logThread{printLog};
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+    logThread.request_stop();
+    logThread.join();
 
     return EXIT_SUCCESS;
 }
