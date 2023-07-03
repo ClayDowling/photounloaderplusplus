@@ -14,6 +14,9 @@ FetchContent_MakeAvailable(catch2)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
 include(Catch)
 
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+qt_standard_project_setup()
+
 include_directories(${catch2_SOURCE_DIR}/src)
 add_subdirectory(test)
 add_subdirectory(src)
